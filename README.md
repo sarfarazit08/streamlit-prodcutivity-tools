@@ -35,6 +35,8 @@ This Streamlit app is designed to help you manage and interact with text prompts
 
 - [Streamlit](https://streamlit.io/): The app is built with Streamlit, an open-source Python library for creating web applications.
 
+- [Deployment Documnetation](https://docs.streamlit.io/streamlit-community-cloud/deploy-your-app) : The app is deployed on Streamlit Cloud by refering this documentation.
+
 - [gTTS (Google Text-to-Speech)](https://pypi.org/project/gTTS/): Used for text-to-speech conversion.
 
 - [Pandas](https://pandas.pydata.org/): Data manipulation and storage in dataframes.
