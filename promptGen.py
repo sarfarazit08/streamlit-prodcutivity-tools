@@ -1,10 +1,10 @@
-import io, json, base64, pyperclip, tempfile
-import os
+import io, json, base64, pyperclip, tempfile, cv2, os
 from gtts import gTTS
 import soundfile as sf
 import streamlit as st
 from streamlit_option_menu import option_menu
 import pandas as pd
+import numpy as np
 from pdfminer.high_level import extract_text
 from tabulate import tabulate
 from pdf2image import convert_from_path
@@ -352,10 +352,46 @@ class PromptCollectionApp:
                 # Provide a download link for the ZIP file
                 st.markdown(get_binary_file_downloader_html(zip_buffer, "Converted_Images.zip"), unsafe_allow_html=True)
 
+    def image_processing(self):
+        def brighten_image(image, amount):
+            img_bright = cv2.convertScaleAbs(image, beta=amount)
+            return img_bright
+
+        def blur_image(image, amount):
+            blur_img = cv2.GaussianBlur(image, (11, 11), amount)
+            return blur_img
+
+        def enhance_details(img):
+            hdr = cv2.detailEnhance(img, sigma_s=12, sigma_r=0.15)
+            return hdr
+        
+        st.title("OpenCV Image Processing")
+        st.subheader("This app allows you to play with Image filters!")
+
+        blur_rate = st.sidebar.slider("Blurring", min_value=0.5, max_value=3.5)
+        brightness_amount = st.sidebar.slider("Brightness", min_value=-50, max_value=50, value=0)
+        apply_enhancement_filter = st.sidebar.checkbox('Enhance Details')
+
+        image_file = st.file_uploader("⬆️ Upload Your Image", type=['jpg', 'png', 'jpeg'])
+        if not image_file:
+            return None
+
+        original_image = Image.open(image_file)
+        original_image = np.array(original_image)
+
+        processed_image = blur_image(original_image, blur_rate)
+        processed_image = brighten_image(processed_image, brightness_amount)
+
+        if apply_enhancement_filter:
+            processed_image = enhance_details(processed_image)
+
+        st.info("Original Image vs Processed Image")
+        st.image([original_image, processed_image])
+
 def main():
     #st.title("Productivity Tools")
-    menu = ["Prompt Techniques", "Add Prompt", "Search Prompts", "Prompt Cards", "Choose Prompt", "Edit Prompt", "Text-Speech Conversion", "PDF Text Extractor", "PDF-Image Conversion","JSON-CSV Converter", "MD Table-CSV Conversion"]
-    icons = ['house', 'plus-square',"search", "card-heading","check2-square", "pencil-square", "music-note-list", "body-text", "file-image", "filetype-csv","filetype-csv" ]
+    menu = ["Prompt Techniques", "Add Prompt", "Search Prompts", "Prompt Cards", "Choose Prompt", "Edit Prompt", "Image Processing(OpenCV)", "Text-Speech Conversion", "PDF Text Extractor", "PDF-Image Conversion","JSON-CSV Converter", "MD Table-CSV Conversion"]
+    icons = ['house', 'plus-square',"search", "card-heading","check2-square", "pencil-square","cpu", "music-note-list", "body-text", "file-image", "filetype-csv","filetype-csv" ]
     with st.sidebar:
         selected = option_menu("Productivity Tools", menu, icons=icons, menu_icon="list", default_index=1, orientation="vertical")
 
@@ -398,7 +434,10 @@ def main():
 
     elif selected == "PDF-Image Conversion":
         app.pdf2image()
+    
+    elif selected == "Image Processing(OpenCV)":
+        app.image_processing()
 
-
+    st.info("You can host the Streamlit application in Streamlit Cloud for free. You can host up to 3 apps in an account for free with up to 1GB of memory.")
 if __name__ == "__main__":
     main()
