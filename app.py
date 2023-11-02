@@ -1,8 +1,9 @@
-import io, json, base64, pyperclip, tempfile, cv2, os, qrcode, fitz
+import io, json, base64, pyperclip, tempfile, cv2, os, qrcode, fitz, re
 from gtts import gTTS
 import soundfile as sf
 import streamlit as st
 from streamlit_option_menu import option_menu
+from streamlit_player import st_player
 import pandas as pd
 import numpy as np
 from pdfminer.high_level import extract_text
@@ -214,7 +215,6 @@ class PromptCollectionApp:
                         file_name="pages.zip",
                         mime="application/zip",
                     )
-
 
     def json2csv(self):
         st.subheader("JSON to CSV Conversion")
@@ -471,13 +471,31 @@ class PromptCollectionApp:
                 else:
                     st.error("No QR code found in the uploaded image.")
 
+    def mediaplayer(self):
+        def is_valid_url(url):
+            # Define a regular expression pattern to validate URLs
+            url_pattern = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'
+            return re.match(url_pattern, url) is not None
 
+        st.subheader("Media Player App")
+        st.info("Paste a link to a media site (e.g., YouTube, SoundCloud) to play the content.")
+
+        media_link = st.text_input("Enter the media link:")
+
+        if st.button("Play"):
+            if is_valid_url(media_link):
+                st_player(media_link)
+                # You can add more conditions for other media sites, like SoundCloud, Vimeo, etc.
+            else:
+                st.error("Invalid URL. Please enter a valid URL.")
 def main():
     #st.title("Productivity Tools")
-    menu = ["Prompt Techniques", "Add Prompt", "Search Prompts", "Prompt Cards", "Choose Prompt", "Edit Prompt", "Image Processing(OpenCV)", "Text-Speech Conversion", "JSON-CSV Converter", "MD Table-CSV Conversion", "QR Encoder-Decoder","PDF Processor"]
-    icons = ['house', 'plus-square',"search", "card-heading","check2-square", "pencil-square","cpu", "music-note-list", "filetype-csv","filetype-csv" , "qr-code", "filetype-pdf"]
+    menu = ["Prompt Techniques", "Add Prompt", "Search Prompts", "Prompt Cards", "Choose Prompt", "Edit Prompt", "Image Processing(OpenCV)", 
+            "Text-Speech Conversion", "JSON-CSV Converter", "MD Table-CSV Conversion", "QR Encoder-Decoder","PDF Processor", "Online Media Player"]
+    icons = ['house', 'plus-square',"search", "card-heading","check2-square", "pencil-square","cpu", "music-note-list",
+             "filetype-csv","filetype-csv" , "qr-code", "filetype-pdf", "play-btn"]
     with st.sidebar:
-        selected = option_menu("Productivity Tools", menu, icons=icons, menu_icon="list", default_index=11, orientation="vertical")
+        selected = option_menu("Productivity Tools", menu, icons=icons, menu_icon="list", default_index=12, orientation="vertical")
 
     app = PromptCollectionApp()
     data = app.load_data()
@@ -521,6 +539,9 @@ def main():
     
     elif selected == "PDF Processor":
         app.pdf_processor()
+
+    elif selected == "Online Media Player":
+        app.mediaplayer()
 
     st.error("📜 Copyright © 2023 https://www.youtube.com/@LearnWithNewton. All rights reserved.")
 

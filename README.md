@@ -1,4 +1,4 @@
-# Streamlit Prompt Collection App
+# Streamlit Prompt Collector & Productivity Tools
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-0.0%20%7C%201.0%20%7C%202.0-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
@@ -50,6 +50,8 @@ This Streamlit app is designed to help you manage and interact with text prompts
 - [OpenCV (cv2)](https://opencv.org/): Image processing for brightness, blurring, and detail enhancement.
 
 - [Tabulate](https://pypi.org/project/tabulate/): Converting dataframes to markdown tables.
+
+- [QR Encoder-Decoder](): Create QR codes for a text and decode Text from QR Image. 
 
 ## Usage
 
