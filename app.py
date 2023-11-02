@@ -8,7 +8,7 @@ import numpy as np
 from pdfminer.high_level import extract_text
 from tabulate import tabulate
 from PIL import Image
-import pyzbar
+from pyzbar.pyzbar import decode
 import zipfile2
 
 class PromptCollectionApp:
