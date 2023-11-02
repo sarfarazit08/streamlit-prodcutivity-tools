@@ -8,7 +8,7 @@ import numpy as np
 from pdfminer.high_level import extract_text
 from tabulate import tabulate
 from PIL import Image
-from pyzbar.pyzbar import decode
+import pyzbar
 import zipfile2
 
 class PromptCollectionApp:
@@ -461,8 +461,8 @@ class PromptCollectionApp:
             # Decode QR code from an image
             uploaded_image = st.file_uploader("Upload an image containing a QR code", type=["jpg", "png", "jpeg"])
             if uploaded_image:
-                image = cv2.imdecode(np.fromstring(uploaded_image.read(), np.uint8), cv2.IMREAD_COLOR)
-                decoded_objects = decode(image)
+                image = cv2.imdecode(np.frombuffer(uploaded_image.read(), np.uint8), cv2.IMREAD_COLOR)
+                decoded_objects = pyzbar.decode(image)
 
                 if decoded_objects:
                     for obj in decoded_objects:
