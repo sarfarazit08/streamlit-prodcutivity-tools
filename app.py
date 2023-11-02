@@ -462,7 +462,7 @@ class PromptCollectionApp:
             uploaded_image = st.file_uploader("Upload an image containing a QR code", type=["jpg", "png", "jpeg"])
             if uploaded_image:
                 image = cv2.imdecode(np.frombuffer(uploaded_image.read(), np.uint8), cv2.IMREAD_COLOR)
-                decoded_objects = pyzbar.decode(image)
+                decoded_objects = decode(image)
 
                 if decoded_objects:
                     for obj in decoded_objects:
