@@ -1,5 +1,6 @@
 import io, json, base64, pyperclip, tempfile, cv2, os, qrcode, fitz, re
 from gtts import gTTS
+import requests
 import soundfile as sf
 import streamlit as st
 from streamlit_option_menu import option_menu
@@ -15,6 +16,9 @@ import zipfile2
 class PromptCollectionApp:
     def __init__(self):
         self.data = self.load_data()
+        self.header = st.container()
+        self.content = st.container()
+        self.footer = st.container()
 
     def load_data(self):
         data = pd.read_excel("prompts.xlsx")  # Use a configurable file path
@@ -88,7 +92,7 @@ class PromptCollectionApp:
 
             if st.button("📋 Copy Prompt"):
                 pyperclip.copy(selected_prompt)
-                st.info("Prompt copied to clipboard.")
+                st.info("**ℹ️** Prompt copied to clipboard.")
 
     def edit_prompt(self, data, category_dict):
         st.subheader("✏️ Edit Prompt")
@@ -111,12 +115,10 @@ class PromptCollectionApp:
                 st.success("Prompt updated successfully!")
 
     def pdf_processor(self):
-        st.info("Upload a PDF file and view, extract text file, save the pages as image.")
-        
+        st.info("**ℹ** Upload a PDF file and view, extract text file, save the pages as image.")
 
         # Create Tabs
         pdfViewer, pdfTextExtractor, pdfImgExtractor, pdfZipDownload = st.tabs(["PDF Viewer", "PDF Text Extractor", "PDF Image Extractor", "PDF To Image Zip"])
-       
         
         with pdfViewer:
             # Upload PDF file
@@ -218,7 +220,7 @@ class PromptCollectionApp:
 
     def json2csv(self):
         st.subheader("JSON to CSV Conversion")
-        st.info("Upload a JSON file to convert it to CSV file.")
+        st.info("**ℹ** Upload a JSON file to convert it to CSV file.")
 
         # Upload JSON file
         json_file = st.file_uploader("Upload JSON File", type=["json"])
@@ -249,7 +251,7 @@ class PromptCollectionApp:
 
     def md_table2csv(self):
         st.subheader("MarkdownTable-CSV Conversion")
-        st.info("Upload a Markdown file containing a table and click the 'Convert to CSV' button to generate a CSV file.")
+        st.info("**ℹ** Upload a Markdown file containing a table to generate a CSV file.")
 
         # File uploader for Markdown file
         markdown_file = st.file_uploader("Upload a Markdown file", type=["md", "markdown"])
@@ -303,7 +305,7 @@ class PromptCollectionApp:
                         file_name="markdown_to_csv.csv",
                     )
             else:
-                st.warning("Please upload a Markdown file first.")
+                st.warning("⚠️ Please upload a Markdown file first.")
 
     def search_prompts(self, data):
         st.subheader("Search for prompts")
@@ -321,7 +323,7 @@ class PromptCollectionApp:
                 st.write(f"**Results for '{search_query}':**")
                 st.dataframe(filtered_data)
             else:
-                st.warning(f"No prompts found for '{search_query}'")
+                st.warning(f"⚠️ No prompts found for '{search_query}'")
 
     def prompt_cards(self, data):
         if data is not None:
@@ -375,7 +377,7 @@ class PromptCollectionApp:
                     st.markdown(f'<a href="data:audio/{output_format.lower()};base64,{b64}" download="output.{output_format.lower()}">⬇️ Download {output_format}</a>', unsafe_allow_html=True)
                     os.remove(audio_file)
                 else:
-                    st.warning("Please enter some text to convert.")
+                    st.warning("⚠️ Please enter some text to convert.")
 
 
         with textfile:
@@ -394,7 +396,7 @@ class PromptCollectionApp:
                     st.markdown(f'<a href="data:audio/{output_format.lower()};base64,{b64}" download="output.{output_format.lower()}">⬇️ Download {output_format}</a>', unsafe_allow_html=True)
                     os.remove(audio_file)
                 else:
-                    st.warning("Please upload a text file to convert.")
+                    st.warning("⚠️ Please upload a text file to convert.")
         
     def image_processing(self):
         def brighten_image(image, amount):
@@ -433,9 +435,8 @@ class PromptCollectionApp:
         st.image([original_image, processed_image])
 
     def qr_processor(self):
-        # Streamlit app title and description
         st.subheader("QR Code Encoder & Decoder")
-        st.info("Encode text to QR code or decode QR codes from images.")
+        st.info("**ℹ️** Encode text to QR code or decode QR codes from images.")
 
         tabEncodeQr, tabDecodeQr = st.tabs(["Encode QR Code", "Decode QR Code"])
         with tabEncodeQr:
@@ -478,7 +479,7 @@ class PromptCollectionApp:
             return re.match(url_pattern, url) is not None
 
         st.subheader("Media Player App")
-        st.info("Paste a link to a media site (e.g., YouTube, SoundCloud) to play the content.")
+        st.info("**ℹ️** Paste a 🔗link to a media site (e.g., YouTube▶️, SoundCloud🎵) to play the content.")
 
         media_link = st.text_input("Enter the media link:")
 
@@ -488,63 +489,122 @@ class PromptCollectionApp:
                 # You can add more conditions for other media sites, like SoundCloud, Vimeo, etc.
             else:
                 st.error("Invalid URL. Please enter a valid URL.")
-def main():
-    #st.title("Productivity Tools")
-    menu = ["Prompt Techniques", "Add Prompt", "Search Prompts", "Prompt Cards", "Choose Prompt", "Edit Prompt", "Image Processing(OpenCV)", 
-            "Text-Speech Conversion", "JSON-CSV Converter", "MD Table-CSV Conversion", "QR Encoder-Decoder","PDF Processor", "Online Media Player"]
-    icons = ['house', 'plus-square',"search", "card-heading","check2-square", "pencil-square","cpu", "music-note-list",
-             "filetype-csv","filetype-csv" , "qr-code", "filetype-pdf", "play-btn"]
-    with st.sidebar:
-        selected = option_menu("Productivity Tools", menu, icons=icons, menu_icon="list", default_index=12, orientation="vertical")
 
-    app = PromptCollectionApp()
-    data = app.load_data()
-    category_dict = app.data_dict(data)
+    def git_repos_list(self):
+        st.subheader("GitHub Profile Viewer")
+        st.info("ℹ️ Retrieve and display profile of a GitHub user.")
 
-    if selected == "Prompt Techniques":
-        app.prompt_techniques()
+        github_username = st.text_input("Enter a GitHub username:")
 
-    elif selected == "Add Prompt":
-        app.add_prompt(data, category_dict)
-    
-    elif selected == "Search Prompts":
-        app.search_prompts(data)
-    
-    elif selected == "Choose Prompt":
-        app.choose_prompt(category_dict)
+        if st.button("Fetch Repositories"):
+            if github_username:
+                profile_url = f"https://api.github.com/users/{github_username}"
+                profileResponse = requests.get(profile_url)
 
-    elif selected == "Edit Prompt":
-        app.edit_prompt(data, category_dict)
+                repo_url = f"https://api.github.com/users/{github_username}/repos"
+                repoResponse = requests.get(repo_url)
 
-    elif selected == "Text-Speech Conversion":
-        app.text2speech()
-    
-    elif selected == "JSON-CSV Converter":
-        app.json2csv()
+                readme = f"https://raw.githubusercontent.com/sarfarazit08/sarfarazit08/main/README.md"
+                readmeResponse = requests.get(readme)
 
-    elif selected == "MD Table-CSV Conversion":
-        app.md_table2csv()
+                
 
-    elif selected == "Prompt Cards":
-        app.prompt_cards(data)
-    
-    elif selected == "Prompt Cards":
-        app.text2speech()
+                if repoResponse.status_code == 200 and profileResponse.status_code == 200 and readmeResponse.status_code == 200:
+                    profile_data = profileResponse.json()
+                    repo_data = repoResponse.json()
 
-    elif selected == "Image Processing(OpenCV)":
-        app.image_processing()
-    
-    elif selected == "QR Encoder-Decoder":
-        app.qr_processor()
-    
-    elif selected == "PDF Processor":
-        app.pdf_processor()
+                    st.write(f"GitHub Profile for {github_username}:")
+                    st.markdown(f"![{profile_data['name']}]({profile_data['avatar_url']})")
 
-    elif selected == "Online Media Player":
-        app.mediaplayer()
+                    st.markdown(readmeResponse.text, unsafe_allow_html=True)
 
-    st.error("📜 Copyright © 2023 https://www.youtube.com/@LearnWithNewton. All rights reserved.")
+
+                    st.write("Repositories List:")
+                    # Display data as a Markdown table
+                    markdown_table = "| Sl.No. | Name | Description | URL |\n| --- | --- | --- | --- |\n"
+                    for index, repo in enumerate(repo_data, start=1):
+                        markdown_table += f"| {index} | {repo['name']} | {repo['description']} | [{repo['name']}]({repo['html_url']}) |\n"
+            
+                    st.markdown(markdown_table, unsafe_allow_html=True)
+
+                else:
+                    st.error(f"💀 Failed to retrieve data from GitHub API. Status code: {profileResponse.status_code}, {repoResponse.status_code}, {readmeResponse.status_code} ")
+            else:
+                st.warning("⚠️ Please enter a GitHub username.")
+    def main(self):
+        menu = ["Prompt Techniques", "Add Prompt", "Search Prompts", "Prompt Cards", "Choose Prompt", "Edit Prompt", "Image Processing(OpenCV)", 
+                "Text-Speech Conversion", "JSON-CSV Converter", "MD Table-CSV Conversion", "QR Encoder-Decoder","PDF Processor", "Online Media Player", "Git Repos List"]
+        icons = ['house', 'plus-square',"search", "card-heading","check2-square", "pencil-square","cpu", "music-note-list",
+                "filetype-csv","filetype-csv" , "qr-code", "filetype-pdf", "play-btn", "git"]
+        with st.sidebar:
+            selected = option_menu("Productivity Tools", menu, icons=icons, menu_icon="list", default_index=13, orientation="vertical")
 
         
-if __name__ == "__main__":
-    main()
+        data = app.load_data()
+        category_dict = app.data_dict(data)
+
+
+
+        if selected == "Prompt Techniques":
+            app.prompt_techniques()
+
+        elif selected == "Add Prompt":
+            app.add_prompt(data, category_dict)
+        
+        elif selected == "Search Prompts":
+            app.search_prompts(data)
+        
+        elif selected == "Choose Prompt":
+            app.choose_prompt(category_dict)
+
+        elif selected == "Edit Prompt":
+            app.edit_prompt(data, category_dict)
+
+        elif selected == "Text-Speech Conversion":
+            app.text2speech()
+        
+        elif selected == "JSON-CSV Converter":
+            app.json2csv()
+
+        elif selected == "MD Table-CSV Conversion":
+            app.md_table2csv()
+
+        elif selected == "Prompt Cards":
+            app.prompt_cards(data)
+        
+        elif selected == "Prompt Cards":
+            app.text2speech()
+
+        elif selected == "Image Processing(OpenCV)":
+            app.image_processing()
+        
+        elif selected == "QR Encoder-Decoder":
+            app.qr_processor()
+        
+        elif selected == "PDF Processor":
+            app.pdf_processor()
+
+        elif selected == "Online Media Player":
+            app.mediaplayer()
+
+        elif selected == "Git Repos List":
+            app.git_repos_list()
+ 
+    def run(self):
+        with self.header:
+            st.subheader("Streamlit Prompt Collector & Productivity Tools")
+
+        with self.content:
+            st.markdown("---")
+            self.main()  # Call the main() function to execute the primary functionality
+
+        with self.footer:
+            st.markdown("---")
+            st.error("📜 Copyright © 2023 **Streamlit Prompt Collector & Productivity Tools**. All rights reserved.")
+            st.error("Created By: [@LearnWithNewton](https://www.youtube.com/@LearnWithNewton)")
+
+# Create an instance of the MyApp class
+app = PromptCollectionApp()
+
+# Run the app
+app.run()
