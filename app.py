@@ -1,4 +1,4 @@
-import io, json, base64, pyperclip, tempfile, cv2, os
+import io, json, base64, pyperclip, tempfile, cv2, os, qrcode, fitz
 from gtts import gTTS
 import soundfile as sf
 import streamlit as st
@@ -7,9 +7,9 @@ import pandas as pd
 import numpy as np
 from pdfminer.high_level import extract_text
 from tabulate import tabulate
-from pdf2image import convert_from_path
 from PIL import Image
-from zipfile import ZipFile
+from pyzbar.pyzbar import decode
+import zipfile2
 
 class PromptCollectionApp:
     def __init__(self):
@@ -99,8 +99,6 @@ class PromptCollectionApp:
                 category_dict[selected_category]["titles"].index(selected_title)
             ]
 
-            #st.write(f"**Selected Title:** {selected_title}")
-            #st.write(f"**Old Prompt:** {selected_prompt}")
             new_prompt = st.text_area("Edit Old Prompt:", selected_prompt)
 
             if st.button("✅ Save Changes"):
@@ -111,28 +109,113 @@ class PromptCollectionApp:
                 data.to_excel("prompts.xlsx", index=False)
                 st.success("Prompt updated successfully!")
 
-    def pdf_text_extractor(self):
-        # Page title and description
-        st.subheader("PDF Text Extractor")
+    def pdf_processor(self):
+        st.info("Upload a PDF file and view, extract text file, save the pages as image.")
+        
 
-        # Upload PDF file
-        pdf_file = st.file_uploader("Upload a PDF file", type=["pdf"])
+        # Create Tabs
+        pdfViewer, pdfTextExtractor, pdfImgExtractor, pdfZipDownload = st.tabs(["PDF Viewer", "PDF Text Extractor", "PDF Image Extractor", "PDF To Image Zip"])
+       
+        
+        with pdfViewer:
+            # Upload PDF file
+            pdf_file1 = st.file_uploader("Upload a PDF file", type=["pdf"], key="pdffilek1")
+            if pdf_file1:
+                with fitz.open(stream=pdf_file1.read(), filetype="pdf") as pdf_document:
+                    num_pages = len(pdf_document)
+                    if num_pages == 1:
+                        # Get the Pixmap for the single page
+                        pixmap = pdf_document.load_page(0).get_pixmap()
 
-        if pdf_file is not None:
-            # Extract text from the uploaded PDF file
-            text = extract_text(pdf_file)
-            # Show the extracted text
-            with st.expander("Extracted Text"):
-                st.text(text)
-                
-            st.markdown(f"**Download Text File**")
-            st.download_button(
-                    label="⬇️ Download Text",
-                    data=text,
-                    key="extracted_text.txt",
-                    file_name="extracted_text.txt",
-                )
-    
+                        # Convert the Pixmap to a PIL image
+                        pil_image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+
+                        # Display the PIL image in Streamlit
+                        st.image(pil_image, use_column_width=True)
+                    else:
+
+                        # Select a page using a slider
+                        page_number = st.slider("Navigate Page", min_value=1, max_value=num_pages, value=38)
+
+                        # Get the Pixmap for the selected page
+                        pixmap = pdf_document.load_page(page_number - 1).get_pixmap()
+
+                        # Convert the Pixmap to a PIL image
+                        pil_image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+
+                        # Display the PIL image in Streamlit
+                        st.image(pil_image, use_column_width=True)
+
+                        # Add navigation for multiple pages
+                        st.markdown(f"Page {page_number} of {num_pages}")
+
+        with pdfTextExtractor:
+            # Upload PDF file
+            pdf_file2 = st.file_uploader("Upload a PDF file", type=["pdf"], key="pdffilek2")
+            if pdf_file2:
+                # Extract text from the uploaded PDF file
+                text = extract_text(pdf_file2)
+                # Show the extracted text
+                with st.expander("Extracted Text"):
+                    st.text(text)
+                    
+                st.markdown(f"**Download Text File**")
+                st.download_button(
+                        label="⬇️ Download Text",
+                        data=text,
+                        key="extracted_text.txt",
+                        file_name="extracted_text.txt",
+                    )
+
+        with pdfImgExtractor:
+            # Upload PDF file
+            pdf_file3 = st.file_uploader("Upload a PDF file", type=["pdf"], key="pdffilek3")
+            if pdf_file3:
+                with fitz.open(stream=pdf_file3.read(), filetype="pdf") as pdf_document:
+                    num_pages = len(pdf_document)
+                    for i in range(num_pages):
+                        # Get the Pixmap for the selected page
+                        pixmap = pdf_document.load_page(i).get_pixmap()
+
+                        # Convert the Pixmap to a PIL image
+                        pil_image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+
+                        # Display the PIL image in Streamlit
+                        st.image(pil_image, use_column_width=True, caption=f"Page {i+1} of {num_pages}")
+        
+        with pdfZipDownload:
+            # Upload PDF file
+            pdf_file4 = st.file_uploader("Upload a PDF file", type=["pdf"], key="pdffilek4")
+            if pdf_file4:
+                with fitz.open(stream=pdf_file4.read(), filetype="pdf") as pdf_document:
+                    num_pages = len(pdf_document)
+                    # Create a zip file to store page images
+                    zip_buffer = io.BytesIO()
+                    with zipfile2.ZipFile(zip_buffer, "w") as zipf:
+                        for i in range(num_pages):
+                            # Get the Pixmap for the selected page
+                            pixmap = pdf_document.load_page(i).get_pixmap()
+
+                            # Convert the Pixmap to a PIL image
+                            pil_image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+
+                            # Add the page image to the zip file
+                            img_bytes = io.BytesIO()
+                            pil_image.save(img_bytes, format="JPEG")
+                            img_bytes.seek(0)
+                            zipf.writestr(f"{i+1}_page.jpg", img_bytes.read())
+
+                    # Add a download button to download the zip file
+                    st.markdown("## Download Page Images as a Zip File")
+                    st.download_button(
+                        label="Download Zip 🗃️",
+                        data=zip_buffer.getvalue(),
+                        key="zip",
+                        file_name="pages.zip",
+                        mime="application/zip",
+                    )
+
+
     def json2csv(self):
         st.subheader("JSON to CSV Conversion")
         st.info("Upload a JSON file to convert it to CSV file.")
@@ -312,46 +395,7 @@ class PromptCollectionApp:
                     os.remove(audio_file)
                 else:
                     st.warning("Please upload a text file to convert.")
-
-    def pdf2image(self):
-        st.title("PDF-Image Converter")
-
-        # Upload a PDF file
-        uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
-
-        if uploaded_file is not None:
-
-            def get_binary_file_downloader_html(bin_file, file_label='File'):
-                with open(bin_file, 'rb') as f:
-                    data = f.read()
-                b64 = base64.b64encode(data).decode()
-                href = f'<a href="data:application/octet-stream;base64,{b64}" download="{file_label}">Click here to download {file_label}</a>'
-                return href
-            
-            # Convert the PDF to images
-            images = convert_from_path(uploaded_file)
-
-            # Display the images
-            st.subheader("Converted Images")
-            for i, image in enumerate(images):
-                st.image(image, caption=f"Page {i+1}", use_column_width=True)
-
-            # Download the images as a ZIP file
-            if st.button("Download Images as ZIP"):
-                zip_buffer = io.BytesIO()
-                with st.spinner("Creating ZIP file..."):
-                    # Create a ZIP file containing the images
-                    with ZipFile(zip_buffer, 'w') as zipf:
-                        for i, image in enumerate(images):
-                            img_bytes = io.BytesIO()
-                            image.save(img_bytes, format="JPEG")
-                            img_bytes.seek(0)
-                            zipf.writestr(f"page_{i+1}.jpg", img_bytes.read())
-                st.success('ZIP file created!')
-                
-                # Provide a download link for the ZIP file
-                st.markdown(get_binary_file_downloader_html(zip_buffer, "Converted_Images.zip"), unsafe_allow_html=True)
-
+        
     def image_processing(self):
         def brighten_image(image, amount):
             img_bright = cv2.convertScaleAbs(image, beta=amount)
@@ -365,12 +409,12 @@ class PromptCollectionApp:
             hdr = cv2.detailEnhance(img, sigma_s=12, sigma_r=0.15)
             return hdr
         
-        st.title("OpenCV Image Processing")
-        st.subheader("This app allows you to play with Image filters!")
+        st.subheader("OpenCV Image Processing")
+        st.info("This app allows you to play with Image filters!")
 
-        blur_rate = st.sidebar.slider("Blurring", min_value=0.5, max_value=3.5)
-        brightness_amount = st.sidebar.slider("Brightness", min_value=-50, max_value=50, value=0)
-        apply_enhancement_filter = st.sidebar.checkbox('Enhance Details')
+        blur_rate = st.slider("Blurring", min_value=0.5, max_value=3.5)
+        brightness_amount = st.slider("Brightness", min_value=-50, max_value=50, value=0)
+        apply_enhancement_filter = st.checkbox('Enhance Details')
 
         image_file = st.file_uploader("⬆️ Upload Your Image", type=['jpg', 'png', 'jpeg'])
         if not image_file:
@@ -388,12 +432,52 @@ class PromptCollectionApp:
         st.info("Original Image vs Processed Image")
         st.image([original_image, processed_image])
 
+    def qr_processor(self):
+        # Streamlit app title and description
+        st.subheader("QR Code Encoder & Decoder")
+        st.info("Encode text to QR code or decode QR codes from images.")
+
+        tabEncodeQr, tabDecodeQr = st.tabs(["Encode QR Code", "Decode QR Code"])
+        with tabEncodeQr:
+            # Encode text to QR code
+            text = st.text_input("Enter the text to encode as a QR code:")
+            if st.button("Generate QR Code"):
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=50,
+                    border=2,
+                )
+                qr.add_data(text)
+                qr.make(fit=True)
+                qr_img = qr.make_image(fill_color="black", back_color="white")
+
+                # Convert the PIL image to Bytes format
+                image_bytes = io.BytesIO()
+                qr_img.save(image_bytes, format="PNG")
+                st.image(image_bytes, caption="QR Code", use_column_width=True)
+
+        with tabDecodeQr:
+            # Decode QR code from an image
+            uploaded_image = st.file_uploader("Upload an image containing a QR code", type=["jpg", "png", "jpeg"])
+            if uploaded_image:
+                image = cv2.imdecode(np.fromstring(uploaded_image.read(), np.uint8), cv2.IMREAD_COLOR)
+                decoded_objects = decode(image)
+
+                if decoded_objects:
+                    for obj in decoded_objects:
+                        st.subheader("QR Code Data")
+                        st.write(obj.data.decode("utf-8"))
+                else:
+                    st.error("No QR code found in the uploaded image.")
+
+
 def main():
     #st.title("Productivity Tools")
-    menu = ["Prompt Techniques", "Add Prompt", "Search Prompts", "Prompt Cards", "Choose Prompt", "Edit Prompt", "Image Processing(OpenCV)", "Text-Speech Conversion", "PDF Text Extractor", "PDF-Image Conversion","JSON-CSV Converter", "MD Table-CSV Conversion"]
-    icons = ['house', 'plus-square',"search", "card-heading","check2-square", "pencil-square","cpu", "music-note-list", "body-text", "file-image", "filetype-csv","filetype-csv" ]
+    menu = ["Prompt Techniques", "Add Prompt", "Search Prompts", "Prompt Cards", "Choose Prompt", "Edit Prompt", "Image Processing(OpenCV)", "Text-Speech Conversion", "JSON-CSV Converter", "MD Table-CSV Conversion", "QR Encoder-Decoder","PDF Processor"]
+    icons = ['house', 'plus-square',"search", "card-heading","check2-square", "pencil-square","cpu", "music-note-list", "filetype-csv","filetype-csv" , "qr-code", "filetype-pdf"]
     with st.sidebar:
-        selected = option_menu("Productivity Tools", menu, icons=icons, menu_icon="list", default_index=1, orientation="vertical")
+        selected = option_menu("Productivity Tools", menu, icons=icons, menu_icon="list", default_index=11, orientation="vertical")
 
     app = PromptCollectionApp()
     data = app.load_data()
@@ -416,9 +500,6 @@ def main():
 
     elif selected == "Text-Speech Conversion":
         app.text2speech()
-
-    elif selected == "PDF Text Extractor":
-        app.pdf_text_extractor()
     
     elif selected == "JSON-CSV Converter":
         app.json2csv()
@@ -432,12 +513,17 @@ def main():
     elif selected == "Prompt Cards":
         app.text2speech()
 
-    elif selected == "PDF-Image Conversion":
-        app.pdf2image()
-    
     elif selected == "Image Processing(OpenCV)":
         app.image_processing()
+    
+    elif selected == "QR Encoder-Decoder":
+        app.qr_processor()
+    
+    elif selected == "PDF Processor":
+        app.pdf_processor()
 
-    st.info("You can host the Streamlit application in Streamlit Cloud for free. You can host up to 3 apps in an account for free with up to 1GB of memory.")
+    st.error("📜 Copyright © 2023 https://www.youtube.com/@LearnWithNewton. All rights reserved.")
+
+        
 if __name__ == "__main__":
     main()
