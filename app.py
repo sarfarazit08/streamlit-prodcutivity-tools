@@ -88,11 +88,11 @@ class PromptCollectionApp:
                 category_dict[selected_category]["titles"].index(selected_title)
             ]
             #st.write(f"**Selected Title:** {selected_title}")
-            st.error(selected_prompt)
+            st.code(selected_prompt)
 
-            if st.button("📋 Copy Prompt"):
-                pyperclip.copy(selected_prompt)
-                st.info("**ℹ️** Prompt copied to clipboard.")
+            # if st.button("📋 Copy Prompt"):
+            #     pyperclip.copy(selected_prompt)
+            #     st.info("**ℹ️** Prompt copied to clipboard.")
 
     def edit_prompt(self, data, category_dict):
         st.subheader("✏️ Edit Prompt")
@@ -542,8 +542,6 @@ class PromptCollectionApp:
         
         data = app.load_data()
         category_dict = app.data_dict(data)
-
-
 
         if selected == "Prompt Techniques":
             app.prompt_techniques()
