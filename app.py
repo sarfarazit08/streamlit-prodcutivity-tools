@@ -41,7 +41,7 @@ class PromptCollectionApp:
         with open("prompt_techniques.md", "r", encoding="utf-8") as f:
             techniques_markdown = f.read()
             # Show the extracted text
-            with st.expander("Extracted Text"):
+            with st.expander("Prompt Techniques:"):
                 #st.text(text)
                 st.markdown(techniques_markdown)
     
@@ -522,13 +522,79 @@ class PromptCollectionApp:
                     st.error(f"💀 Failed to retrieve data from GitHub API. Status code: {profileResponse.status_code}, {repoResponse.status_code}, {readmeResponse.status_code} ")
             else:
                 st.warning("⚠️ Please enter a GitHub username.")
+
+    def subtitle_parser(self):
+        st.subheader("Transcript(SRT) to Markdown Converter")
+        uploaded_file = st.file_uploader("Upload an SRT file", type=["srt"])
+        
+        
+        if uploaded_file is not None:
+            srt_text = uploaded_file.read().decode("utf-8")
+
+            with st.expander("Transcript Content:"):
+                st.write(srt_text)
+
+            srt_lines = srt_text.strip().split('\r\n\r\n')
+            lines = []
+            for srt_line in srt_lines:
+                srt_parts = srt_line.split('\n')
+                if len(srt_parts) >= 3:
+                    #timestamp = srt_parts[0]
+                    #timestamp = ' '.join(srt_parts[1:])
+                    subtitle = ' '.join(srt_parts[2:])
+                    lines.append(f"{subtitle}")
+            
+            contents =  ' '.join(lines)
+
+            with st.expander("Parsed Content:"):
+                st.write(contents)
+
+            st.markdown(f"**Download Text File**")
+            st.download_button(
+                    label="⬇️ Download Text File",
+                    data=contents,
+                    key="parsed_text",
+                    file_name="parsed_text.txt",
+                )
+    
+    def image_slider(self):
+        st.subheader("🖼️ Image carousel")
+        st.info("Upload a text file with each line representing an image path.")
+        # File uploader widget
+        uploaded_file = st.file_uploader("Upload a text file", type=["txt"], key="images links")
+
+        if uploaded_file is not None:
+            # Read the contents of the uploaded text file
+            text_contents = uploaded_file.read().decode("utf-8")
+
+            # Split the text file contents into lines and extract image paths
+            image_urls = [line.strip() for line in text_contents.splitlines()]
+
+            # Initialize a variable to keep track of the current image index
+            current_image_index = st.session_state.get("current_image_index", 0)
+
+            # Display the current image
+            st.image(image_urls[current_image_index], width=450)
+
+            prevCol, nxtCol = st.columns(2)
+            with prevCol:
+                # Add buttons for navigation
+                if st.button("⏮️ Previous"):
+                    current_image_index = (current_image_index - 1) % len(image_urls)
+                    st.session_state.current_image_index = current_image_index
+            with nxtCol:
+                if st.button("Next ⏭️"):
+                    current_image_index = (current_image_index + 1) % len(image_urls)
+                    st.session_state.current_image_index = current_image_index            
+
     def main(self):
         menu = ["Prompt Techniques", "Add Prompt", "Search Prompts", "Prompt Cards", "Choose Prompt", "Edit Prompt", "Image Processing(OpenCV)", 
-                "Text-Speech Conversion", "JSON-CSV Converter", "MD Table-CSV Conversion", "QR Encoder-Decoder","PDF Processor", "Online Media Player", "Git Repos List"]
+                "Text-Speech Conversion", "JSON-CSV Converter", "MD Table-CSV Conversion", "QR Encoder-Decoder","PDF Processor", "Online Media Player", "Git Repos List",
+                "Subtitle Parser", "Image Slider"]
         icons = ['house', 'plus-square',"search", "card-heading","check2-square", "pencil-square","cpu", "music-note-list",
-                "filetype-csv","filetype-csv" , "qr-code", "filetype-pdf", "play-btn", "git"]
+                "filetype-csv","filetype-csv" , "qr-code", "filetype-pdf", "play-btn", "git", "chat-square-text", "file-slides"]
         with st.sidebar:
-            selected = option_menu("Productivity Tools", menu, icons=icons, menu_icon="list", default_index=13, orientation="vertical")
+            selected = option_menu("Productivity Tools", menu, icons=icons, menu_icon="list", default_index=1, orientation="vertical")
 
         
         data = app.load_data()
@@ -578,10 +644,17 @@ class PromptCollectionApp:
 
         elif selected == "Git Repos List":
             app.git_repos_list()
+
+        elif selected == "Subtitle Parser":
+            app.subtitle_parser()
+
+        elif selected == "Image Slider":
+            app.image_slider()
  
     def run(self):
         with self.header:
-            st.subheader("Streamlit Prompt Collector & Productivity Tools")
+            st.title("🤖Automation & 🚀Productivity Tools")
+            st.markdown('> "_A lot of Artificial Intelligence is neither Artificial nor Intelligent._"')
 
         with self.content:
             st.markdown("---")
@@ -590,7 +663,7 @@ class PromptCollectionApp:
         with self.footer:
             st.markdown("---")
             st.error("📜 Copyright © 2023 **Streamlit Prompt Collector & Productivity Tools**. All rights reserved.")
-            st.error("Created By: [@LearnWithNewton](https://www.youtube.com/@LearnWithNewton)")
+            st.error("Created By: [@sarfarazit08](https://github.com/sarfarazit08) | [@LearnWithNewton](https://www.youtube.com/@LearnWithNewton)")
 
 # Create an instance of the MyApp class
 app = PromptCollectionApp()
