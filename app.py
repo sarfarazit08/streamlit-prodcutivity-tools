@@ -1,4 +1,4 @@
-import io, json, base64, pyperclip, tempfile, cv2, os, qrcode, fitz, re
+import io, json, base64, tempfile, cv2, os, qrcode, fitz, re
 from gtts import gTTS
 import requests
 import soundfile as sf
@@ -89,10 +89,6 @@ class PromptCollectionApp:
             ]
             #st.write(f"**Selected Title:** {selected_title}")
             st.code(selected_prompt)
-
-            # if st.button("📋 Copy Prompt"):
-            #     pyperclip.copy(selected_prompt)
-            #     st.info("**ℹ️** Prompt copied to clipboard.")
 
     def edit_prompt(self, data, category_dict):
         st.subheader("✏️ Edit Prompt")
@@ -344,11 +340,7 @@ class PromptCollectionApp:
                     with col:
                         st.info(row['title'])
                         st.success(row['prompt'])
-
-                        copy_button = st.button("📃 Copy", key=f"copy_{row['category']}_{row['title']}")
-                        if copy_button:
-                            pyperclip.copy(row['prompt'])
-                            st.success("Prompt copied to clipboard.")
+                        st.code(row['prompt'])
 
     def text2speech(self):
 
