@@ -339,7 +339,6 @@ class PromptCollectionApp:
                 for col, (_, row) in zip(cols, data_chunk.iterrows()):
                     with col:
                         st.info(row['title'])
-                        st.success(row['prompt'])
                         st.code(row['prompt'])
 
     def text2speech(self):
