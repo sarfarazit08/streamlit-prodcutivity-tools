@@ -87,7 +87,7 @@ class PromptCollectionApp:
             selected_prompt = category_dict[selected_category]["prompts"][
                 category_dict[selected_category]["titles"].index(selected_title)
             ]
-            #st.write(f"**Selected Title:** {selected_title}")
+            st.write("Prompt:")
             st.code(selected_prompt)
 
     def edit_prompt(self, data, category_dict):
